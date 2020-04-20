@@ -1,0 +1,61 @@
+from django.shortcuts import render, HttpResponseRedirect, redirect, get_object_or_404
+from django.http import HttpResponse
+from .models import Person
+from .forms import addNewForm
+from django.views.decorators.clickjacking import xframe_options_exempt
+
+
+# Create your views here.
+@xframe_options_exempt
+def addnew(request):
+    form = addNewForm(request.POST or None, request.FILES or None)
+    msg="الرجاء تعبئة الفورمة"
+    if request.method == "POST":
+        pname= request.POST.get("name")
+        pnationality = request.POST.get("nationality")
+        pcardid = request.POST.get("cardid")
+        phelptype = request.POST.get("helptype")
+        puploadImg = request.POST.get("uploadImg")
+        pcomments = request.POST.get("comments")
+
+        getcardid=Person.objects.filter(cardid=pcardid)
+        if getcardid:
+            msg="رقم البطاقة مكرر"
+            context = {'form': form,
+                   'msg': msg,
+                   'code':1}
+            return render(request, "ghelp/add_new.html", context)
+        else:
+            new_person= Person()
+            new_person = Person(name=pname, nationality=pnationality, cardid=pcardid, uploadImg=puploadImg, helptype=phelptype, comments=pcomments)
+            #upload_file=request.FILES['uploadImg']
+            #fs=FileSystemStorage()
+            #fs.save(uploaded_file.name,uploaded_file)
+            new_person.save()
+            form=addNewForm()
+            msg="تم تعبئة الإستمارة بنجاح"
+            context = {'form': form,
+                'msg': msg,
+                'code':0}
+            return render(request, "ghelp/add_new.html", context)
+
+        # getting the id of the Place which will be saved. the id will be sent inside a hidden filed from the form
+
+        """pname= request.POST.get("name")
+        pnationality = request.POST.get("nationality")
+        pcardid = request.POST.get("cardid")
+        phelptype = request.POST.get("helptype")
+        pcomments = request.POST.get("comments")
+
+
+        # adding data to the model
+        new_person = Person(name=pname, nationality=pnationality, cardid=pcardid, comments=pcomments)
+        new_person.save()"""
+
+
+    else:
+        form=addNewForm()
+        context = {'form': form,
+                   'msg': msg,
+                   'code':2}
+        return render(request, "ghelp/add_new.html", context)
